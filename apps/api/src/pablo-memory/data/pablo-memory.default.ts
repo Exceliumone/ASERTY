@@ -55,17 +55,21 @@ export const defaultPabloMemory: PabloMemory = {
     recurringReferences: ['the trash can', 'the moon', 'the bull run', 'the raccoon community'],
   },
   visualIdentity: {
-    species: 'anthropomorphic raccoon',
-    face: 'black mask around the eyes, light-colored snout, expressive mischievous eyes, small round ears',
-    proportions: 'stocky round body, head slightly larger than the body (mascot style), clearly visible striped tail',
-    outfitBase: 'grey hoodie with the Pablo logo, sometimes a cap depending on context',
-    colorPalette: ['charcoal grey', 'black', 'off-white', 'Solana green (#14F195)', 'Solana purple (#9945FF)'],
+    species: 'realistic 3D-rendered anthropomorphic raccoon (Pixar/CG-realism hybrid, not a flat cartoon)',
+    face:
+      'classic raccoon black eye mask blending into dark fur, light grey/cream muzzle and chin, sly smirking expression with one visible lower fang, sharply angled eyebrows giving a confident/mischievous look, small rounded ears, expressive amber-brown eyes',
+    proportions:
+      'young-adult male build, about 36 inches tall standing bipedal, athletic-but-stocky body (not chubby), proportionate head (not oversized mascot-style), long bushy ring-striped tail (alternating dark grey/black and cream bands) visible hanging behind or draped to one side',
+    outfitBase:
+      'black ribbed beanie with "PABLO" embroidered across the front, black pullover hoodie with "PABLO" printed in bold light-grey/white block letters on the chest (or back when viewed from behind), black jogger sweatpants, black-and-white high-top sneakers',
+    colorPalette: ['black', 'charcoal grey', 'cream/off-white (fur + text)', 'Solana green (#14F195)', 'Solana purple (#9945FF)'],
     consistencyRules: [
-      'Always the same character: never a different raccoon or another species.',
-      'Always the same face: black mask, light snout, mischievous eyes.',
-      'Always the same proportions: stocky body, proportionally large head, striped tail.',
-      "Context (astronaut, pirate, trader...) changes the outfit and setting, never Pablo's anatomy or face.",
-      'Consistent with the selected graphic style (comic, 3D, pixel art, etc.) but stable visual identity.',
+      'Always the exact same character: a raccoon, never a different animal, and never a human wearing a costume.',
+      'Always the same face: black eye mask, cream muzzle, sly smirk with a visible fang, angled confident eyebrows.',
+      'Always the same outfit base: black beanie reading "PABLO", black hoodie reading "PABLO", black sweatpants, black-and-white sneakers — accessories (sunglasses, helmet, weapon, props) may be ADDED for context but never replace the beanie+hoodie.',
+      'Always the same proportions: young-adult bipedal build, long bushy striped tail, proportionate (not oversized) head.',
+      "Context (astronaut, pirate, trader, cowboy...) changes the scene, added props, and background only — never Pablo's face, body proportions, or base outfit.",
+      'Rendering stays photorealistic 3D/CG by default; only switch render style (comic, anime, pixel art, etc.) when a style is explicitly requested, and even then keep the face, outfit and proportions above unchanged.',
     ],
   },
   emotions: {
