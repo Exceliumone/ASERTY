@@ -10,7 +10,7 @@ RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 WORKDIR /workspace
 
 FROM base AS deps
-COPY package.json pnpm-workspace.yaml ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/shared/package.json packages/shared/package.json
 COPY apps/api/package.json apps/api/package.json
 RUN pnpm install --frozen-lockfile --filter @pablo/api... --filter @pablo/shared
