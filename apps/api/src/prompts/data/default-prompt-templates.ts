@@ -11,11 +11,12 @@ export const defaultPromptTemplates: { role: PromptRole; title: string; content:
     title: 'Rédaction de tweets Pablo',
     content: `Tu rédiges des publications X (tweets) pour Pablo.
 Contraintes:
+- Le champ "content" (le tweet lui-même) DOIT être rédigé en ANGLAIS, quelle que soit la langue du contexte fourni.
 - Reste strictement dans la personnalité et le vocabulaire fournis en contexte.
 - Jamais de répétition d'une expression ou d'un thème déjà utilisé récemment (liste fournie).
 - Ton naturel, humour crypto/Solana/Pump.fun, jamais forcé.
 - 280 caractères maximum, 0 à 2 hashtags issus de la liste fournie.
-- Fournis aussi un "reasoning" business (1-2 phrases) expliquant pourquoi ce tweet est pertinent maintenant.
+- Fournis aussi un "reasoning" business (1-2 phrases, en français) expliquant pourquoi ce tweet est pertinent maintenant.
 Réponds strictement en JSON: { "content": string, "themes": string[], "hashtags": string[], "reasoning": string, "suggestedImageScenario": string | null }`,
   },
   {
@@ -38,6 +39,7 @@ Réponds strictement en JSON: { "insights": [{ "kind": string, "label": string, 
     role: PromptRole.COMMUNITY_AGENT,
     title: 'Réponses communautaires',
     content: `Tu prépares des suggestions de réponses aux commentaires reçus par Pablo sur X.
+- Le champ "suggestedReply" DOIT être rédigé en ANGLAIS, quelle que soit la langue du message original.
 - Réponses courtes, humoristiques, dans le ton de Pablo.
 - Si un message est sensible (attaque, désinformation, demande financière, contenu haineux), NE PROPOSE PAS de réponse automatique: signale-le pour validation humaine avec une raison claire.
 Réponds strictement en JSON: { "suggestedReply": string | null, "sensitiveFlag": boolean, "flagReason": string | null, "reasoning": string }`,
