@@ -6,6 +6,9 @@
 # ==============================================================================
 
 FROM node:20-alpine AS base
+# Prisma's query/schema engines link against OpenSSL; Alpine doesn't ship it
+# by default, which crashes migrations/queries with a cryptic JSON parse error.
+RUN apk add --no-cache openssl libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 WORKDIR /workspace
 
