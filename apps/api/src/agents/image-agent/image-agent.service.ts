@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PabloMemoryService } from '../../pablo-memory/pablo-memory.service';
 import { PromptsService } from '../../prompts/prompts.service';
 import { OpenAiService } from '../openai/openai.service';
+import { ImageProviderService } from '../image-provider/image-provider.service';
 import { MemoryStoreService } from '../memory-store/memory-store.service';
 import { DecisionLogService } from '../decision-log/decision-log.service';
 import { LocalStorageService } from '../../storage/local-storage.service';
@@ -44,6 +45,7 @@ export class ImageAgentService {
     private readonly pabloMemory: PabloMemoryService,
     private readonly prompts: PromptsService,
     private readonly openAi: OpenAiService,
+    private readonly imageProvider: ImageProviderService,
     private readonly memoryStore: MemoryStoreService,
     private readonly decisionLog: DecisionLogService,
     private readonly storage: LocalStorageService,
@@ -73,7 +75,7 @@ export class ImageAgentService {
       temperature: 0.7,
     });
 
-    const generated = await this.openAi.generateImage(draft.imagePrompt);
+    const generated = await this.imageProvider.generateImage(draft.imagePrompt);
 
     let url = generated.url;
     let storageKey = '';

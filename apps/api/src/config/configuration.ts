@@ -32,9 +32,18 @@ export default () => ({
   },
 
   openai: {
+    // baseUrl lets this point at any OpenAI-compatible provider (e.g. Groq's
+    // free tier: https://api.groq.com/openai/v1) instead of api.openai.com.
+    baseUrl: process.env.OPENAI_BASE_URL || undefined,
     apiKey: process.env.OPENAI_API_KEY,
     textModel: process.env.OPENAI_TEXT_MODEL ?? 'gpt-4.1',
     imageModel: process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1',
+  },
+
+  images: {
+    // 'openai' uses OPENAI_IMAGE_MODEL via the configured client; 'pollinations'
+    // uses the free, keyless Pollinations.ai image API instead.
+    provider: process.env.IMAGE_PROVIDER === 'pollinations' ? 'pollinations' : 'openai',
   },
 
   x: {

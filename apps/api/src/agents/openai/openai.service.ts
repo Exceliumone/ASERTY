@@ -12,6 +12,10 @@ export interface JsonCompletionParams {
  * Thin, shared wrapper around the OpenAI SDK. All five agents go through
  * this single service so model selection, retries and JSON-parsing live in
  * one place instead of being duplicated per agent.
+ *
+ * `openai.baseUrl` lets this target any OpenAI-compatible provider (e.g.
+ * Groq's free tier) instead of api.openai.com — the SDK and call sites never
+ * change, only the configured endpoint/key/model do.
  */
 @Injectable()
 export class OpenAiService {
@@ -19,7 +23,10 @@ export class OpenAiService {
   private client: OpenAI;
 
   constructor(private readonly config: ConfigService) {
-    this.client = new OpenAI({ apiKey: this.config.get<string>('openai.apiKey') });
+    this.client = new OpenAI({
+      apiKey: this.config.get<string>('openai.apiKey'),
+      baseURL: this.config.get<string>('openai.baseUrl'),
+    });
   }
 
   async completeJson<T>(params: JsonCompletionParams): Promise<T> {
