@@ -20,6 +20,7 @@ import { PabloMemoryModule } from './pablo-memory/pablo-memory.module';
 import { PromptsModule } from './prompts/prompts.module';
 import { AgentsModule } from './agents/agents.module';
 import { StorageModule } from './storage/storage.module';
+import { CredentialsModule } from './credentials/credentials.module';
 
 import { TwitterModule } from './twitter/twitter.module';
 import { TweetsModule } from './tweets/tweets.module';
@@ -46,6 +47,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     QueueModule,
     EncryptionModule,
     StorageModule,
+    CredentialsModule,
 
     // Auth & users
     AuthModule,
