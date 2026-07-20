@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { SectionHeader } from '@/components/dashboard/section-header';
 import { usePromptsByRole } from '@/lib/hooks';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/utils';
 
 const ROLES = [
@@ -37,11 +38,25 @@ function RolePromptPanel({ role }: { role: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id]);
 
+  const [saving, setSaving] = React.useState(false);
+
   async function handleSave() {
-    await api.post('/prompts', { role, title, content, changelog });
-    await mutate();
-    setEditing(false);
-    setChangelog('');
+    setSaving(true);
+    try {
+      await api.post('/prompts', { role, title, content, changelog });
+      await mutate();
+      setEditing(false);
+      setChangelog('');
+      toast({ title: 'Nouvelle version enregistrée', variant: 'success' });
+    } catch (error) {
+      toast({
+        title: "Échec de l'enregistrement",
+        description: error instanceof ApiError ? error.message : 'Une erreur inattendue est survenue.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -57,8 +72,8 @@ function RolePromptPanel({ role }: { role: string }) {
               Éditer
             </Button>
           ) : (
-            <Button variant="gradient" onClick={handleSave}>
-              Enregistrer (nouvelle version)
+            <Button variant="gradient" onClick={handleSave} disabled={saving}>
+              {saving ? 'Enregistrement...' : 'Enregistrer (nouvelle version)'}
             </Button>
           )}
         </CardHeader>
@@ -99,8 +114,17 @@ function RolePromptPanel({ role }: { role: string }) {
                   size="sm"
                   variant="ghost"
                   onClick={async () => {
-                    await api.post(`/prompts/${role}/${v.version}/activate`);
-                    await mutate();
+                    try {
+                      await api.post(`/prompts/${role}/${v.version}/activate`);
+                      await mutate();
+                      toast({ title: `Version ${v.version} activée`, variant: 'success' });
+                    } catch (error) {
+                      toast({
+                        title: "Échec de l'activation",
+                        description: error instanceof ApiError ? error.message : 'Une erreur inattendue est survenue.',
+                        variant: 'destructive',
+                      });
+                    }
                   }}
                 >
                   Activer

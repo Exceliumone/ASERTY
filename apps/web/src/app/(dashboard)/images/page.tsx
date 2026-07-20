@@ -21,6 +21,8 @@ import { FadeIn } from '@/components/dashboard/fade-in';
 import { useImages } from '@/lib/hooks';
 import { IMAGE_STYLES } from '@/lib/image-styles';
 import { api } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import { notifyError } from '@/lib/notify-error';
 
 export default function ImagesPage() {
   const { data: images, mutate, isLoading } = useImages();
@@ -39,6 +41,9 @@ export default function ImagesPage() {
       await mutate();
       setOpen(false);
       setContext('');
+      toast({ title: 'Image générée', variant: 'success' });
+    } catch (error) {
+      notifyError("Échec de la génération d'image", error);
     } finally {
       setGenerating(false);
     }

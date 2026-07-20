@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { addDays, format, isSameDay, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ImageIcon } from 'lucide-react';
@@ -55,8 +56,8 @@ export default function CalendrierPage() {
                     </div>
                   ))}
                   {dayEntries.length === 0 && (
-                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
-                      + Planifier une publication
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground" asChild>
+                      <Link href="/suggestions">+ Planifier une publication</Link>
                     </Button>
                   )}
                 </CardContent>

@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { SectionHeader } from '@/components/dashboard/section-header';
 import { usePabloMemory } from '@/lib/hooks';
 import { api } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import { notifyError } from '@/lib/notify-error';
 import { formatDate } from '@/lib/utils';
 
 interface CredentialSummary {
@@ -36,6 +38,9 @@ function ApiKeysTab() {
       await api.post('/credentials', { provider, label, value });
       setValue('');
       await mutate();
+      toast({ title: 'Clé enregistrée', variant: 'success' });
+    } catch (error) {
+      notifyError("Échec de l'enregistrement de la clé", error);
     } finally {
       setSaving(false);
     }
@@ -81,8 +86,13 @@ function ApiKeysTab() {
                 variant="ghost"
                 size="icon"
                 onClick={async () => {
-                  await api.delete(`/credentials/${cred.id}`);
-                  await mutate();
+                  try {
+                    await api.delete(`/credentials/${cred.id}`);
+                    await mutate();
+                    toast({ title: 'Clé supprimée', variant: 'success' });
+                  } catch (error) {
+                    notifyError('Échec de la suppression', error);
+                  }
                 }}
               >
                 <Trash2 className="h-4 w-4" />
@@ -109,12 +119,26 @@ function PabloMemoryTab() {
   }, [memory]);
 
   async function handleSave() {
+    let data: unknown;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      toast({
+        title: 'JSON invalide',
+        description: 'Vérifie la syntaxe (virgules, guillemets, accolades) avant de publier.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSaving(true);
     try {
-      const data = JSON.parse(raw);
       await api.post('/pablo-memory/versions', { data, changelog });
       setChangelog('');
       await mutate();
+      toast({ title: 'Nouvelle version de la mémoire publiée', variant: 'success' });
+    } catch (error) {
+      notifyError('Échec de la publication', error);
     } finally {
       setSaving(false);
     }

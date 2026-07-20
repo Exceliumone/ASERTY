@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Users, Zap, FileText, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,11 +10,35 @@ import { StatCard } from '@/components/dashboard/stat-card';
 import { FadeIn } from '@/components/dashboard/fade-in';
 import { useDashboardKpis, useDecisionLogs, useTweets } from '@/lib/hooks';
 import { formatDate, formatNumber, formatPercent } from '@/lib/utils';
+import { api, ApiError } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
 export default function HomePage() {
   const { data: kpis } = useDashboardKpis();
-  const { data: suggestions } = useTweets('SUGGESTED');
+  const { data: suggestions, mutate: mutateSuggestions } = useTweets('SUGGESTED');
   const { data: logs } = useDecisionLogs();
+  const [generating, setGenerating] = React.useState(false);
+
+  async function handleGenerateIdeas() {
+    setGenerating(true);
+    try {
+      const created = await api.post<unknown[]>('/agents/content/generate', { count: 3 });
+      await mutateSuggestions();
+      toast({
+        title: 'Nouvelles idées générées',
+        description: `${created.length} suggestion(s) ajoutée(s) — à retrouver dans Suggestions.`,
+        variant: 'success',
+      });
+    } catch (error) {
+      toast({
+        title: 'Échec de la génération',
+        description: error instanceof ApiError ? error.message : 'Une erreur inattendue est survenue.',
+        variant: 'destructive',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -28,8 +53,8 @@ export default function HomePage() {
               Voici un résumé de l&apos;activité de vos agents IA aujourd&apos;hui.
             </p>
           </div>
-          <Button variant="gradient" size="lg">
-            Générer de nouvelles idées
+          <Button variant="gradient" size="lg" disabled={generating} onClick={handleGenerateIdeas}>
+            {generating ? 'Génération en cours...' : 'Générer de nouvelles idées'}
           </Button>
         </div>
       </FadeIn>
@@ -47,7 +72,7 @@ export default function HomePage() {
             value={formatPercent(kpis?.avgEngagementRate ?? 0)}
             icon={Zap}
           />
-          <StatCard label="Publications cette semaine" value={String(kpis?.tweetsThisWeek ?? 0)} icon={FileText} />
+          <StatCard label="Publiées sur X cette semaine" value={String(kpis?.tweetsThisWeek ?? 0)} icon={FileText} />
           <StatCard
             label="Meilleure heure de publication"
             value={`${kpis?.bestPostingHour ?? 0}h`}

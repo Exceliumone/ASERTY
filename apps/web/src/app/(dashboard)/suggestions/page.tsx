@@ -11,6 +11,8 @@ import { SectionHeader } from '@/components/dashboard/section-header';
 import { FadeIn } from '@/components/dashboard/fade-in';
 import { useCommunityQueue, useTweets } from '@/lib/hooks';
 import { api } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
+import { notifyError } from '@/lib/notify-error';
 
 function TweetSuggestions() {
   const { data: tweets, mutate } = useTweets('SUGGESTED');
@@ -19,14 +21,24 @@ function TweetSuggestions() {
 
   async function handleSchedule(tweetId: string) {
     if (!date) return;
-    await api.post('/calendar', { tweetId, scheduledAt: new Date(date).toISOString() });
-    await mutate();
-    setScheduling(null);
+    try {
+      await api.post('/calendar', { tweetId, scheduledAt: new Date(date).toISOString() });
+      await mutate();
+      setScheduling(null);
+      toast({ title: 'Publication planifiée', variant: 'success' });
+    } catch (error) {
+      notifyError('Échec de la planification', error);
+    }
   }
 
   async function handleArchive(tweetId: string) {
-    await api.post(`/tweets/${tweetId}/archive`);
-    await mutate();
+    try {
+      await api.post(`/tweets/${tweetId}/archive`);
+      await mutate();
+      toast({ title: 'Suggestion archivée', variant: 'success' });
+    } catch (error) {
+      notifyError("Échec de l'archivage", error);
+    }
   }
 
   return (
@@ -81,12 +93,22 @@ function CommunityQueue() {
   const { data: replies, mutate } = useCommunityQueue();
 
   async function approve(id: string) {
-    await api.post(`/agents/community/${id}/approve`);
-    await mutate();
+    try {
+      await api.post(`/agents/community/${id}/approve`);
+      await mutate();
+      toast({ title: 'Réponse approuvée', variant: 'success' });
+    } catch (error) {
+      notifyError("Échec de l'approbation", error);
+    }
   }
   async function dismiss(id: string) {
-    await api.post(`/agents/community/${id}/dismiss`);
-    await mutate();
+    try {
+      await api.post(`/agents/community/${id}/dismiss`);
+      await mutate();
+      toast({ title: 'Réponse ignorée', variant: 'success' });
+    } catch (error) {
+      notifyError("Échec de l'action", error);
+    }
   }
 
   return (

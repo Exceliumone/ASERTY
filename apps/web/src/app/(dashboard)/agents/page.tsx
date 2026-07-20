@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/dashboard/section-header';
 import { FadeIn } from '@/components/dashboard/fade-in';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
 interface AgentDefinition {
   key: string;
@@ -64,6 +65,17 @@ export default function AgentsPage() {
     try {
       await agent.action.run();
       setLastRun((prev) => ({ ...prev, [agent.key]: new Date().toLocaleTimeString('fr-FR') }));
+      toast({
+        title: `${agent.name} : terminé`,
+        description: 'Action exécutée avec succès.',
+        variant: 'success',
+      });
+    } catch (error) {
+      toast({
+        title: `${agent.name} : échec`,
+        description: error instanceof ApiError ? error.message : 'Une erreur inattendue est survenue.',
+        variant: 'destructive',
+      });
     } finally {
       setRunning(null);
     }

@@ -6,11 +6,13 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDashboardKpis() {
-    const [latestSnapshot, tweetsThisWeek, pendingSuggestions, bestHourInsight, avgEngagement] =
+    const [latestSnapshot, publishedThisWeek, pendingSuggestions, bestHourInsight, avgEngagement] =
       await Promise.all([
         this.prisma.analyticsSnapshot.findFirst({ orderBy: { capturedAt: 'desc' } }),
+        // Counts tweets actually PUBLISHED to X this week — not drafts/suggestions,
+        // so this matches what the operator actually sees on the X profile.
         this.prisma.tweet.count({
-          where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+          where: { status: 'PUBLISHED', publishedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
         }),
         this.prisma.tweet.count({ where: { status: 'SUGGESTED' } }),
         this.prisma.analyticsInsight.findFirst({ where: { kind: 'best_hour' }, orderBy: { computedAt: 'desc' } }),
@@ -21,7 +23,7 @@ export class AnalyticsService {
       followersCount: latestSnapshot?.followersCount ?? 0,
       followersDelta7d: latestSnapshot?.followersDelta ?? 0,
       avgEngagementRate: avgEngagement._avg.engagementRate ?? 0,
-      tweetsThisWeek,
+      tweetsThisWeek: publishedThisWeek,
       bestPostingHour: bestHourInsight ? parseInt(bestHourInsight.label, 10) || 0 : 0,
       pendingSuggestions,
     };
