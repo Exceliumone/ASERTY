@@ -32,8 +32,13 @@ WORKDIR /workspace
 COPY --from=build /workspace/package.json /workspace/pnpm-workspace.yaml ./
 COPY --from=build /workspace/packages/shared ./packages/shared
 COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+COPY --from=build /workspace/apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY --from=build /workspace/apps/api/dist ./apps/api/dist
 COPY --from=build /workspace/apps/api/prisma ./apps/api/prisma
+# prisma/seed.ts imports its default data straight from src/ (single source of
+# truth with the running app instead of duplicating it) so seeding via ts-node
+# needs the TypeScript sources available, not just the compiled dist/ output.
+COPY --from=build /workspace/apps/api/src ./apps/api/src
 COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /workspace/node_modules ./node_modules
 
