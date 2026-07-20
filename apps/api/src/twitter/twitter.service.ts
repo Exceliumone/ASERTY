@@ -20,23 +20,40 @@ export interface MentionItem {
  * Thin wrapper around the official X API v2 client. Every call here is
  * queued through BullMQ by the callers (never invoked in a tight loop) so
  * the platform's rate limits are respected by construction.
+ *
+ * The client is built lazily: without X credentials configured, the app
+ * still boots normally and every agent keeps working in "draft-only" mode —
+ * only an actual publish/fetch attempt fails, with a clear error.
  */
 @Injectable()
 export class TwitterService {
   private readonly logger = new Logger(TwitterService.name);
-  private client: TwitterApi;
+  private client: TwitterApi | null = null;
 
-  constructor(private readonly config: ConfigService) {
-    this.client = new TwitterApi({
-      appKey: this.config.get<string>('x.apiKey') ?? '',
-      appSecret: this.config.get<string>('x.apiSecret') ?? '',
-      accessToken: this.config.get<string>('x.accessToken') ?? '',
-      accessSecret: this.config.get<string>('x.accessTokenSecret') ?? '',
-    });
+  constructor(private readonly config: ConfigService) {}
+
+  private getClient(): TwitterApi {
+    if (this.client) {
+      return this.client;
+    }
+
+    const appKey = this.config.get<string>('x.apiKey');
+    const appSecret = this.config.get<string>('x.apiSecret');
+    const accessToken = this.config.get<string>('x.accessToken');
+    const accessSecret = this.config.get<string>('x.accessTokenSecret');
+
+    if (!appKey || !appSecret || !accessToken || !accessSecret) {
+      throw new Error(
+        "Clés API X non configurées : impossible de publier ou de lire les métriques. Renseignez X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN et X_ACCESS_TOKEN_SECRET.",
+      );
+    }
+
+    this.client = new TwitterApi({ appKey, appSecret, accessToken, accessSecret });
+    return this.client;
   }
 
   async postTweet(content: string, mediaUrl?: string): Promise<string> {
-    const rw = this.client.readWrite;
+    const rw = this.getClient().readWrite;
     let mediaId: string | undefined;
 
     if (mediaUrl) {
@@ -55,7 +72,7 @@ export class TwitterService {
   }
 
   async fetchTweetMetrics(xTweetId: string): Promise<TweetMetrics> {
-    const result = await this.client.readOnly.v2.singleTweet(xTweetId, {
+    const result = await this.getClient().readOnly.v2.singleTweet(xTweetId, {
       'tweet.fields': ['public_metrics'],
     });
 
@@ -76,8 +93,9 @@ export class TwitterService {
       return [];
     }
 
-    const user = await this.client.readOnly.v2.userByUsername(username);
-    const mentions = await this.client.readOnly.v2.userMentionTimeline(user.data.id, {
+    const client = this.getClient();
+    const user = await client.readOnly.v2.userByUsername(username);
+    const mentions = await client.readOnly.v2.userMentionTimeline(user.data.id, {
       since_id: sinceId,
       'tweet.fields': ['author_id', 'text'],
       expansions: ['author_id'],
@@ -87,10 +105,12 @@ export class TwitterService {
       (mentions.includes?.users ?? []).map((u) => [u.id, u.username]),
     );
 
-    return mentions.data.data?.map((tweet) => ({
-      id: tweet.id,
-      authorUsername: authorsById.get(tweet.author_id ?? '') ?? 'unknown',
-      text: tweet.text,
-    })) ?? [];
+    return (
+      mentions.data.data?.map((tweet) => ({
+        id: tweet.id,
+        authorUsername: authorsById.get(tweet.author_id ?? '') ?? 'unknown',
+        text: tweet.text,
+      })) ?? []
+    );
   }
 }

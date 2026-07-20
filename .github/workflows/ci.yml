@@ -78,6 +78,9 @@ jobs:
       - name: Unit tests (API)
         run: pnpm --filter @pablo/api test -- --ci
 
+      - name: Unit tests (Web)
+        run: pnpm --filter @pablo/web test -- --ci
+
       - name: Build API
         run: pnpm --filter @pablo/api build
 

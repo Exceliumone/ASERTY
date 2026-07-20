@@ -41,7 +41,7 @@ export class OpenAiService {
 
     try {
       return JSON.parse(raw) as T;
-    } catch (error) {
+    } catch {
       this.logger.error(`Failed to parse OpenAI JSON response: ${raw}`);
       throw new Error("Réponse du modèle non conforme au format JSON attendu.");
     }

@@ -7,9 +7,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  // Anchors the standalone trace to the monorepo root so the pnpm workspace
-  // (packages/shared, hoisted node_modules) is included in the Docker build.
-  outputFileTracingRoot: join(__dirname, '../../'),
+  experimental: {
+    // Anchors the standalone trace to the monorepo root so the pnpm workspace
+    // (packages/shared, hoisted node_modules) is included in the Docker build.
+    outputFileTracingRoot: join(__dirname, '../../'),
+  },
   transpilePackages: ['@pablo/shared'],
   images: {
     remotePatterns: [

@@ -22,7 +22,9 @@ interface CredentialSummary {
 }
 
 function ApiKeysTab() {
-  const { data: credentials, mutate } = useSWR<CredentialSummary[]>('/credentials', (p) => api.get(p));
+  const { data: credentials, mutate } = useSWR<CredentialSummary[]>('/credentials', (p: string) =>
+    api.get<CredentialSummary[]>(p),
+  );
   const [provider, setProvider] = React.useState('X');
   const [label, setLabel] = React.useState('default');
   const [value, setValue] = React.useState('');

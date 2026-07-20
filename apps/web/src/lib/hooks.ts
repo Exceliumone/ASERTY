@@ -25,8 +25,16 @@ export function useEngagementHistory(days = 30) {
   return useSWR<AnalyticsSnapshotDto[]>(`/analytics/history?days=${days}`, fetcher);
 }
 
+export interface AnalyticsInsightDto {
+  id: string;
+  kind: string;
+  label: string;
+  score: number;
+  computedAt: string;
+}
+
 export function useAnalyticsInsights(kind: string) {
-  return useSWR(`/analytics/insights/${kind}`, fetcher);
+  return useSWR<AnalyticsInsightDto[]>(`/analytics/insights/${kind}`, fetcher);
 }
 
 export function useTweets(status?: string) {

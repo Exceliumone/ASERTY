@@ -33,6 +33,8 @@ function RolePromptPanel({ role }: { role: string }) {
       setTitle(active.title);
       setContent(active.content);
     }
+    // Only re-sync local edit buffers when the active version itself changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active?.id]);
 
   async function handleSave() {

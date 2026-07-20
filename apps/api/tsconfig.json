@@ -17,9 +17,6 @@
     "noImplicitAny": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "@pablo/shared": ["../../packages/shared/src"]
-    }
+    "forceConsistentCasingInFileNames": true
   }
 }

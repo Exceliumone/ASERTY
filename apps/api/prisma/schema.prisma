@@ -60,15 +60,15 @@ model RefreshToken {
 
 /// Encrypted (AES-256-GCM) third-party credentials (X API keys, OpenAI key override, etc).
 model ApiCredential {
-  id            String   @id @default(cuid())
-  provider      String // "X", "OPENAI", ...
-  label         String
+  id             String   @id @default(cuid())
+  provider       String // "X", "OPENAI", ...
+  label          String
   encryptedValue String
-  iv            String
-  authTag       String
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  iv             String
+  authTag        String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@unique([provider, label])
   @@map("api_credentials")
@@ -136,26 +136,26 @@ enum AgentType {
 }
 
 model Tweet {
-  id               String      @id @default(cuid())
-  content          String
-  status           TweetStatus @default(DRAFT)
-  themes           String[]
-  hashtags         String[]
-  agentReasoning   String
-  xTweetId         String?     @unique
-  scheduledAt      DateTime?
-  publishedAt      DateTime?
-  failureReason    String?
-  createdByAgent   AgentType   @default(CONTENT)
-  sourceTrendId    String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  content        String
+  status         TweetStatus @default(DRAFT)
+  themes         String[]
+  hashtags       String[]
+  agentReasoning String
+  xTweetId       String?     @unique
+  scheduledAt    DateTime?
+  publishedAt    DateTime?
+  failureReason  String?
+  createdByAgent AgentType   @default(CONTENT)
+  sourceTrendId  String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  sourceTrend    TrendInsight?     @relation(fields: [sourceTrendId], references: [id])
-  images         GeneratedImage[]
-  analytics      AnalyticsSnapshot[]
-  calendarEntry  CalendarEntry?
-  decisionLogs   AgentDecisionLog[]
+  sourceTrend   TrendInsight?       @relation(fields: [sourceTrendId], references: [id])
+  images        GeneratedImage[]
+  analytics     AnalyticsSnapshot[]
+  calendarEntry CalendarEntry?
+  decisionLogs  AgentDecisionLog[]
 
   @@index([status])
   @@index([scheduledAt])
@@ -213,12 +213,12 @@ model GeneratedImage {
 /// Anti-duplication memory: every distinct theme/expression/hashtag already
 /// used, so the Content Agent can steer away from repetition.
 model UsedMemoryItem {
-  id        String   @id @default(cuid())
-  kind      String // "theme" | "expression" | "hashtag" | "scenario"
-  value     String
-  usageCount Int     @default(1)
+  id         String   @id @default(cuid())
+  kind       String // "theme" | "expression" | "hashtag" | "scenario"
+  value      String
+  usageCount Int      @default(1)
   lastUsedAt DateTime @default(now())
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
 
   @@unique([kind, value])
   @@index([kind])
@@ -241,13 +241,13 @@ enum TrendSource {
 }
 
 model TrendInsight {
-  id              String      @id @default(cuid())
-  source          TrendSource
-  topic           String
-  score           Float
-  summary         String
-  suggestedAngle  String
-  detectedAt      DateTime    @default(now())
+  id             String      @id @default(cuid())
+  source         TrendSource
+  topic          String
+  score          Float
+  summary        String
+  suggestedAngle String
+  detectedAt     DateTime    @default(now())
 
   tweets Tweet[]
 
@@ -261,17 +261,17 @@ model TrendInsight {
 // ----------------------------------------------------------------------------
 
 model AnalyticsSnapshot {
-  id              String   @id @default(cuid())
-  tweetId         String?
-  impressions     Int      @default(0)
-  likes           Int      @default(0)
-  reposts         Int      @default(0)
-  replies         Int      @default(0)
-  bookmarks       Int      @default(0)
-  engagementRate  Float    @default(0)
-  followersCount  Int      @default(0)
-  followersDelta  Int      @default(0)
-  capturedAt      DateTime @default(now())
+  id             String   @id @default(cuid())
+  tweetId        String?
+  impressions    Int      @default(0)
+  likes          Int      @default(0)
+  reposts        Int      @default(0)
+  replies        Int      @default(0)
+  bookmarks      Int      @default(0)
+  engagementRate Float    @default(0)
+  followersCount Int      @default(0)
+  followersDelta Int      @default(0)
+  capturedAt     DateTime @default(now())
 
   tweet Tweet? @relation(fields: [tweetId], references: [id])
 
@@ -282,12 +282,12 @@ model AnalyticsSnapshot {
 
 /// Precomputed "best posting hour" style aggregates refreshed by the Analytics Agent.
 model AnalyticsInsight {
-  id          String   @id @default(cuid())
-  kind        String // "best_hour" | "top_hashtag" | "top_format" | "top_topic"
-  label       String
-  score       Float
-  metadata    Json?
-  computedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  kind       String // "best_hour" | "top_hashtag" | "top_format" | "top_topic"
+  label      String
+  score      Float
+  metadata   Json?
+  computedAt DateTime @default(now())
 
   @@index([kind])
   @@map("analytics_insights")
@@ -329,13 +329,13 @@ model CommunityReply {
 // ----------------------------------------------------------------------------
 
 model AgentDecisionLog {
-  id           String    @id @default(cuid())
-  agentType    AgentType
-  action       String
-  reasoning    String
-  metricsUsed  String[]
+  id             String    @id @default(cuid())
+  agentType      AgentType
+  action         String
+  reasoning      String
+  metricsUsed    String[]
   relatedTweetId String?
-  createdAt    DateTime  @default(now())
+  createdAt      DateTime  @default(now())
 
   relatedTweet Tweet? @relation(fields: [relatedTweetId], references: [id])
 
