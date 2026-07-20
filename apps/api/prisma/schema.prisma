@@ -1,0 +1,360 @@
+// ==============================================================================
+// PABLO AI SOCIAL AGENT — Prisma schema
+//
+// Data model backing the full platform: users/auth, the connected X account,
+// AI-generated content (tweets, images), versioned agent prompts, the anti-
+// duplication memory store, the editorial calendar, analytics history,
+// detected trends, community reply moderation, and agent decision logs
+// (business-level reasoning, never raw model chain-of-thought).
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Auth & tenancy
+// ----------------------------------------------------------------------------
+
+enum UserRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(EDITOR)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  refreshTokens   RefreshToken[]
+  approvedReplies CommunityReply[] @relation("ReplyApprover")
+  auditLogs       AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// Encrypted (AES-256-GCM) third-party credentials (X API keys, OpenAI key override, etc).
+model ApiCredential {
+  id            String   @id @default(cuid())
+  provider      String // "X", "OPENAI", ...
+  label         String
+  encryptedValue String
+  iv            String
+  authTag       String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([provider, label])
+  @@map("api_credentials")
+}
+
+// ----------------------------------------------------------------------------
+// Pablo identity & agent prompts
+// ----------------------------------------------------------------------------
+
+/// Single row holding the current Pablo "character bible" as JSON, versioned.
+model PabloMemoryVersion {
+  id        String   @id @default(cuid())
+  version   Int
+  data      Json
+  isActive  Boolean  @default(false)
+  changelog String?
+  createdAt DateTime @default(now())
+
+  @@unique([version])
+  @@map("pablo_memory_versions")
+}
+
+enum PromptRole {
+  CONTENT_AGENT
+  TREND_AGENT
+  ANALYTICS_AGENT
+  COMMUNITY_AGENT
+  IMAGE_AGENT
+}
+
+model PromptTemplate {
+  id        String     @id @default(cuid())
+  role      PromptRole
+  version   Int
+  title     String
+  content   String
+  changelog String?
+  isActive  Boolean    @default(false)
+  createdAt DateTime   @default(now())
+
+  @@unique([role, version])
+  @@index([role, isActive])
+  @@map("prompt_templates")
+}
+
+// ----------------------------------------------------------------------------
+// Content: tweets, images, calendar
+// ----------------------------------------------------------------------------
+
+enum TweetStatus {
+  DRAFT
+  SUGGESTED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+  ARCHIVED
+}
+
+enum AgentType {
+  CONTENT
+  TREND
+  ANALYTICS
+  COMMUNITY
+  IMAGE
+}
+
+model Tweet {
+  id               String      @id @default(cuid())
+  content          String
+  status           TweetStatus @default(DRAFT)
+  themes           String[]
+  hashtags         String[]
+  agentReasoning   String
+  xTweetId         String?     @unique
+  scheduledAt      DateTime?
+  publishedAt      DateTime?
+  failureReason    String?
+  createdByAgent   AgentType   @default(CONTENT)
+  sourceTrendId    String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  sourceTrend    TrendInsight?     @relation(fields: [sourceTrendId], references: [id])
+  images         GeneratedImage[]
+  analytics      AnalyticsSnapshot[]
+  calendarEntry  CalendarEntry?
+  decisionLogs   AgentDecisionLog[]
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("tweets")
+}
+
+model CalendarEntry {
+  id          String      @id @default(cuid())
+  tweetId     String      @unique
+  scheduledAt DateTime
+  status      TweetStatus @default(SCHEDULED)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  tweet Tweet @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledAt])
+  @@map("calendar_entries")
+}
+
+enum ImageStyle {
+  COMIC
+  THREE_D
+  PIXAR
+  ANIME
+  CYBERPUNK
+  PAINTING
+  REALISTIC
+  MEME
+  PIXEL_ART
+  VINTAGE
+  NOIR
+  SYNTHWAVE
+}
+
+model GeneratedImage {
+  id            String     @id @default(cuid())
+  prompt        String
+  scenario      String
+  style         ImageStyle
+  url           String
+  thumbnailUrl  String
+  storageKey    String
+  linkedTweetId String?
+  createdAt     DateTime   @default(now())
+
+  linkedTweet Tweet? @relation(fields: [linkedTweetId], references: [id])
+
+  @@index([style])
+  @@index([scenario])
+  @@map("generated_images")
+}
+
+/// Anti-duplication memory: every distinct theme/expression/hashtag already
+/// used, so the Content Agent can steer away from repetition.
+model UsedMemoryItem {
+  id        String   @id @default(cuid())
+  kind      String // "theme" | "expression" | "hashtag" | "scenario"
+  value     String
+  usageCount Int     @default(1)
+  lastUsedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@unique([kind, value])
+  @@index([kind])
+  @@map("used_memory_items")
+}
+
+// ----------------------------------------------------------------------------
+// Trends
+// ----------------------------------------------------------------------------
+
+enum TrendSource {
+  CRYPTO
+  MEMECOIN
+  SOLANA
+  BITCOIN
+  ETHEREUM
+  PUMPFUN
+  BANTER
+  MEME_CULTURE
+}
+
+model TrendInsight {
+  id              String      @id @default(cuid())
+  source          TrendSource
+  topic           String
+  score           Float
+  summary         String
+  suggestedAngle  String
+  detectedAt      DateTime    @default(now())
+
+  tweets Tweet[]
+
+  @@index([source])
+  @@index([detectedAt])
+  @@map("trend_insights")
+}
+
+// ----------------------------------------------------------------------------
+// Analytics
+// ----------------------------------------------------------------------------
+
+model AnalyticsSnapshot {
+  id              String   @id @default(cuid())
+  tweetId         String?
+  impressions     Int      @default(0)
+  likes           Int      @default(0)
+  reposts         Int      @default(0)
+  replies         Int      @default(0)
+  bookmarks       Int      @default(0)
+  engagementRate  Float    @default(0)
+  followersCount  Int      @default(0)
+  followersDelta  Int      @default(0)
+  capturedAt      DateTime @default(now())
+
+  tweet Tweet? @relation(fields: [tweetId], references: [id])
+
+  @@index([tweetId])
+  @@index([capturedAt])
+  @@map("analytics_snapshots")
+}
+
+/// Precomputed "best posting hour" style aggregates refreshed by the Analytics Agent.
+model AnalyticsInsight {
+  id          String   @id @default(cuid())
+  kind        String // "best_hour" | "top_hashtag" | "top_format" | "top_topic"
+  label       String
+  score       Float
+  metadata    Json?
+  computedAt  DateTime @default(now())
+
+  @@index([kind])
+  @@map("analytics_insights")
+}
+
+// ----------------------------------------------------------------------------
+// Community
+// ----------------------------------------------------------------------------
+
+enum ReplyStatus {
+  SUGGESTED
+  APPROVED
+  SENT
+  FLAGGED
+  DISMISSED
+}
+
+model CommunityReply {
+  id                String      @id @default(cuid())
+  originalMessageId String      @unique
+  originalAuthor    String
+  originalText      String
+  suggestedReply    String
+  status            ReplyStatus @default(SUGGESTED)
+  sensitiveFlag     Boolean     @default(false)
+  flagReason        String?
+  approvedById      String?
+  sentAt            DateTime?
+  createdAt         DateTime    @default(now())
+
+  approvedBy User? @relation("ReplyApprover", fields: [approvedById], references: [id])
+
+  @@index([status])
+  @@map("community_replies")
+}
+
+// ----------------------------------------------------------------------------
+// Explainability / audit
+// ----------------------------------------------------------------------------
+
+model AgentDecisionLog {
+  id           String    @id @default(cuid())
+  agentType    AgentType
+  action       String
+  reasoning    String
+  metricsUsed  String[]
+  relatedTweetId String?
+  createdAt    DateTime  @default(now())
+
+  relatedTweet Tweet? @relation(fields: [relatedTweetId], references: [id])
+
+  @@index([agentType])
+  @@index([createdAt])
+  @@map("agent_decision_logs")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}

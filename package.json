@@ -1,0 +1,32 @@
+{
+  "name": "pablo-ai-social-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PABLO AI SOCIAL AGENT - Plateforme SaaS d'automatisation IA pour la gestion d'un compte X dédié à un memecoin.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter ./apps/* dev",
+    "dev:web": "pnpm --filter @pablo/web dev",
+    "dev:api": "pnpm --filter @pablo/api dev",
+    "build": "pnpm --filter ./packages/* build && pnpm --filter ./apps/* build",
+    "build:web": "pnpm --filter @pablo/web build",
+    "build:api": "pnpm --filter @pablo/api build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @pablo/api test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore",
+    "prisma:generate": "pnpm --filter @pablo/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @pablo/api prisma:migrate",
+    "prisma:studio": "pnpm --filter @pablo/api prisma:studio",
+    "prisma:seed": "pnpm --filter @pablo/api prisma:seed"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}
